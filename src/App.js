@@ -1,5 +1,6 @@
 import './App.css';
 import React, { Component } from 'react';
+import { ButtonToolbar,MenuItem,DropdownButton } from 'react-bootstrap';
 /*import {createStore, applyMiddleware} from 'redux';
 import {Provider} from 'react-redux';
 import {connect} from 'react-redux';
@@ -11,6 +12,10 @@ function helperFunctionCloneArray(arr){
 
 
 class Box extends Component {
+    constructor(){
+      super();
+      this.selectBox = this.selectBox.bind(this);
+    }
     selectBox(){
       this.props.selectBox(this.props.row,this.props.col);
     }
@@ -20,27 +25,75 @@ class Box extends Component {
     }
 
 }
+
+
 class Grid extends Component {
-        constructor(props){
-           super(props);
-          this.width = (this.props.cols * 16) - this.props.cols;
-          this.rowArr = [];
-          this.boxClass = "";
-          this.tempGrid = this.props.gridFull;
-        }    
+      
     
     render(){
-        this.tempGrid.map(function(el,i){
+        var width =  (this.props.cols * 16) - this.props.cols;
+        console.log(width);
+        var tempGrid = this.props.gridFull;
+        var rowArr = [];
+        var boxClass = " ";
+        tempGrid.map(function(el,i){
            el.map(function(el2,j){
                 let boxId = i + "_" + j;
-                this.boxClass = this.tempGrid[i][j] ? "box on" : "box off";
-                this.rowArr.push(<Box boxClass={this.boxClass} key={boxId} boxId={boxId} row={i} col={j} selectBox={this.props.selectBox} />);
+              boxClass = tempGrid[i][j] ? "box on" : "box off";
+                rowArr.push(<Box boxClass={boxClass} key={boxId} boxId={boxId} row={i} col={j} selectBox={this.props.selectBox} />);
            },this);
         },this);
-     return(<div className="grid" id="grid" style={{width:this.width}}>
-     {this.rowsArr}
+     return(<div className="grid" id="grid" style={{width:width}}>
+     {rowArr}
      </div>);
 
+    }
+}
+
+class Buttons extends Component {
+
+     constructor(){
+       super();
+       this.handleSelect = this.handleSelect.bind(this);
+       
+     }
+    handleSelect(event) {
+      this.props.gridSize(event);
+    }
+
+    render() {
+      return (
+        <div className="center">
+          <ButtonToolbar>
+            <button className="btn btn-default" onClick={this.props.playButton.bind(this)}>
+              Play
+            </button>
+            <button className="btn btn-default" onClick={this.props.pauseButton.bind(this)}>
+              Pause
+            </button>
+            <button className="btn btn-default" onClick={this.props.clear.bind(this)}>
+              Clear
+            </button>
+            <button className="btn btn-default" onClick={this.props.slow.bind(this)}>
+              fast
+            </button>
+            <button className="btn btn-default" onClick={this.props.fast.bind(this)}>
+              slow
+            </button>
+            <button className="btn btn-default" onClick={this.props.seed.bind(this)}>
+              Seed
+            </button>
+            <DropdownButton
+              title="Grid Size"
+              id="size-menu"
+              onSelect={this.handleSelect}
+            >
+              <MenuItem eventKey="1">20x10</MenuItem>
+              <MenuItem eventKey="2">50x30</MenuItem>
+            </DropdownButton>
+          </ButtonToolbar>
+        </div>
+        )
     }
 }
 
@@ -48,23 +101,137 @@ class App extends Component {
    constructor(props){
      super(props);
      this.speed = 100;
-     this.cols = 33;
-     this.rows = 16;
-     this.intervalId = null;
+     this.cols = 70;
+     this.rows = 50;
+     this.selectBox = this.selectBox.bind(this);
+     this.seed = this.seed.bind(this);
+     this.play = this.play.bind(this);
+     this.fast = this.fast.bind(this);
+     this.clear = this.clear.bind(this);
+     this.gridSize = this.gridSize.bind(this);
+     this.slow = this.slow.bind(this);
+     this.playButton = this.playButton.bind(this);
+     this.pauseButton = this.pauseButton.bind(this);
      this.state = {
-       intervalId: null,
        gridFull: Array(this.rows).fill().map(()=>Array(this.cols).fill(false)),
        generation: 0
      }
+     
    }
 
 
+   clear(){
+     let grid = Array(this.rows).fill().map(()=>Array(this.cols).fill(false));
+     this.setState({gridFull:grid,generation:0});
+     clearInterval(this.intervalId);
+   }
+
+   gridSize(size){
+        switch(size){
+            case "1":
+              this.cols = 70;
+              this.rows = 50;
+              break;
+
+            case "2":
+              this.cols = 100;
+              this.rows = 70;
+              break;
+
+            default:
+               this.cols = 70;
+               this.rows = 50;   
+        }
+        this.clear();
+   }
+
+   selectBox(row,col) {
+     //console.log(1);
+    let gridCopy =  helperFunctionCloneArray(this.state.gridFull);
+    //console.log(gridCopy);
+		gridCopy[row][col] = !gridCopy[row][col];
+		this.setState({
+			gridFull: gridCopy
+		});
+   }
+
+
+   seed(){
+         let gridCopy = helperFunctionCloneArray(this.state.gridFull);
+         gridCopy.map(function(el,i){
+               el.map(function(el2,j){
+                    if(Math.floor(Math.random() * 4) === 1)
+                       gridCopy[i][j] = true;
+
+               },this);
+         },this);
+         this.setState({gridFull:gridCopy});
+   }
+
+   play(){
+       let g = this.state.gridFull;
+       let g2 = helperFunctionCloneArray(this.state.gridFull);
+
+       g2.map(function(el,i){
+          el.map(function(el2,j){
+              var count = 0; 
+              if (i > 0) if (g[i - 1][j]) count++;
+              if (i > 0 && j > 0) if (g[i - 1][j - 1]) count++;
+              if (i > 0 && j < this.cols - 1) if (g[i - 1][j + 1]) count++;
+              if (j < this.cols - 1) if (g[i][j + 1]) count++;
+              if (j > 0) if (g[i][j - 1]) count++;
+              if (i < this.rows - 1) if (g[i + 1][j]) count++;
+              if (i < this.rows - 1 && j > 0) if (g[i + 1][j - 1]) count++;
+              if (i < this.rows - 1 && this.cols - 1) if (g[i + 1][j + 1]) count++;
+              if (g[i][j] && (count < 2 || count > 3)) g2[i][j] = false;
+              if (!g[i][j] && count === 3) g2[i][j] = true;
+
+          },this);
+       },this);
+
+       this.setState({gridFull:g2,
+        generation: this.state.generation + 1});
+   }
+
+  playButton(){
+    clearInterval(this.intervalId);
+    this.intervalId = setInterval(this.play,this.speed);
+  }
+
+  pauseButton(){
+    clearInterval(this.intervalId);
+  }
+
+  slow(){
+         this.speed = 10;
+          this.playButton();
+        }
+
+  fast(){
+        this.speed = 100;
+        this.playButton();
+  }
+
+  componentDidMount (){
+       this.seed();
+       this.playButton();
+  }
+  
   render(){
     
 
     return(<div>
       <h1>Game of Life</h1>
       <Grid gridFull = {this.state.gridFull} selectBox={this.selectBox} rows={this.rows} cols={this.cols}/>
+      <Buttons
+      playButton={this.playButton}
+      pauseButton={this.pauseButton}
+      slow={this.slow}
+      fast={this.fast}
+      clear={this.clear}
+      seed={this.seed}
+      gridSize={this.gridSize}
+    />
       <h2>generation: {this.state.generation}</h2>
       
       
