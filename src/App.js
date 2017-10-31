@@ -65,31 +65,32 @@ class Buttons extends Component {
       return (
         <div className="center">
           <ButtonToolbar>
-            <button className="btn btn-default" onClick={this.props.playButton.bind(this)}>
+            <button className="btn btn-success" onClick={this.props.playButton.bind(this)}>
               Play
             </button>
             <button className="btn btn-default" onClick={this.props.pauseButton.bind(this)}>
               Pause
             </button>
-            <button className="btn btn-default" onClick={this.props.clear.bind(this)}>
+            <button className="btn btn-danger" onClick={this.props.clear.bind(this)}>
               Clear
             </button>
-            <button className="btn btn-default" onClick={this.props.slow.bind(this)}>
-              fast
+            <button className="btn btn-danger" onClick={this.props.slow.bind(this)}>
+              Slow
             </button>
-            <button className="btn btn-default" onClick={this.props.fast.bind(this)}>
-              slow
+            <button className="btn btn-info" onClick={this.props.fast.bind(this)}>
+              Fast
             </button>
-            <button className="btn btn-default" onClick={this.props.seed.bind(this)}>
+            <button className="btn btn-info" onClick={this.props.seed.bind(this)}>
               Seed
             </button>
-            <DropdownButton
+            <DropdownButton className="btn-info"
               title="Grid Size"
               id="size-menu"
               onSelect={this.handleSelect}
             >
-              <MenuItem eventKey="1">20x10</MenuItem>
-              <MenuItem eventKey="2">50x30</MenuItem>
+              <MenuItem eventKey="1">50x30</MenuItem>
+              <MenuItem eventKey="2">70x50</MenuItem>
+              <MenuItem eventKey="3">100x70</MenuItem>
             </DropdownButton>
           </ButtonToolbar>
         </div>
@@ -106,10 +107,10 @@ class App extends Component {
      this.selectBox = this.selectBox.bind(this);
      this.seed = this.seed.bind(this);
      this.play = this.play.bind(this);
-     this.fast = this.fast.bind(this);
+     //this.fast = this.fast.bind(this);
      this.clear = this.clear.bind(this);
      this.gridSize = this.gridSize.bind(this);
-     this.slow = this.slow.bind(this);
+     //this.slow = this.slow.bind(this);
      this.playButton = this.playButton.bind(this);
      this.pauseButton = this.pauseButton.bind(this);
      this.state = {
@@ -129,18 +130,20 @@ class App extends Component {
    gridSize(size){
         switch(size){
             case "1":
-              this.cols = 70;
-              this.rows = 50;
+              this.cols = 50;
+              this.rows = 30;
               break;
 
             case "2":
-              this.cols = 100;
-              this.rows = 70;
+               this.cols = 70;
+               this.rows = 50;
               break;
 
-            default:
-               this.cols = 70;
-               this.rows = 50;   
+              case "3":
+              this.cols = 100;
+              this.rows = 70;
+              break;  
+
         }
         this.clear();
    }
@@ -193,23 +196,31 @@ class App extends Component {
         generation: this.state.generation + 1});
    }
 
-  playButton(){
-    clearInterval(this.intervalId);
-    this.intervalId = setInterval(this.play,this.speed);
-  }
+
 
   pauseButton(){
     clearInterval(this.intervalId);
   }
 
   slow(){
-         this.speed = 10;
+    console.log("slow");
+         
+         clearInterval(this.intervalId);
+         this.speed = 500;
           this.playButton();
         }
 
   fast(){
+        console.log("fast");
+        clearInterval(this.intervalId);
         this.speed = 100;
+        
         this.playButton();
+  }
+
+  playButton(){
+    clearInterval(this.intervalId);
+    this.intervalId = setInterval(this.play,this.speed);
   }
 
   componentDidMount (){
@@ -226,8 +237,8 @@ class App extends Component {
       <Buttons
       playButton={this.playButton}
       pauseButton={this.pauseButton}
-      slow={this.slow}
-      fast={this.fast}
+      slow={this.slow.bind(this)}
+      fast={this.fast.bind(this)}
       clear={this.clear}
       seed={this.seed}
       gridSize={this.gridSize}
